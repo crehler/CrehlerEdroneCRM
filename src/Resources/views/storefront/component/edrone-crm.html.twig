@@ -1,0 +1,79 @@
+{% block component_head_edrone_crm %}
+    {% set config = config('CrehlerEdroneCrm.config') %}
+    {% set edroneCrm = page.extensions.edroneCrm %}
+    <script type="text/javascript">
+        window.edroneCrmCallback = (function () {
+                let srcjs = "//d3bo67muzbfgtl.cloudfront.net/edrone_2_0.js";
+
+                window._edrone = window._edrone || {};
+                _edrone.app_id = '{{ config.appId }}';
+                _edrone.version = '1.0.0';
+                _edrone.platform_version = '1.0.0';
+                _edrone.platform = 'shopware6';
+
+                {% if not context.customer.guest %}
+                _edrone.email = '{{ context.customer.email |url_encode }}';
+                _edrone.subscriber_status = '{{ context.customer.newsletter |url_encode }}';
+                _edrone.first_name = '{{ context.customer.firstName |url_encode }}';
+                _edrone.last_name = '{{ context.customer.lastName |url_encode }}';
+                _edrone.country = '{{ context.customer.defaultBillingAddress.country.iso |url_encode }}';
+                _edrone.city = '{{ context.customer.defaultBillingAddress.city |url_encode }}';
+                {% endif %}
+
+                if (document.querySelector('.is-ctl-product')) {
+                    _edrone.action_type = 'product_view';
+                    _edrone.product_skus = '{{ page.product.productNumber |url_encode }}';
+                    _edrone.product_ids = '{{ page.product.id }}';
+                    _edrone.product_titles = '{{ page.product.translated.name |url_encode }}';
+                    _edrone.product_images = '{{ page.product.cover.media.url |url_encode }}';
+                    _edrone.product_urls = window.location.href;
+                    _edrone.product_availability = '{% if page.product.available %}1{% else %}0{% endif %}';
+
+                    {% if page.product.extensions.edroneProductCategory is not empty %}
+                        _edrone.product_category_ids = '{{ page.product.extensions.edroneProductCategory.productCategoryIds |url_encode }}';
+                        _edrone.product_category_names = '{{ page.product.extensions.edroneProductCategory.productCategoryNames |url_encode }}';
+                    {% endif %}
+                }
+
+                if (document.querySelector('.is-ctl-checkout.is-act-finishpage')) {
+                    let items_titles = [];
+                    let items_skus = [];
+                    let items_ids = [];
+                    let items_images = [];
+                    let items_url = [];
+                    let items_counts = [];
+                    {% for lineItem in page.order.lineItems %}
+                    {% if lineItem.type == "product" %}
+                    items_titles.push('{{ lineItem.label }}');
+                    items_skus.push('{{ lineItem.payload.productNumber }}');
+                    items_ids.push('{{ lineItem.productId }}');
+                    items_images.push('{{ lineItem.cover.url }}');
+                    items_url.push('{{ seoUrl('frontend.detail.page', {'productId': lineItem.productId}) }}');
+                    items_counts.push('{{ lineItem.quantity }}');
+                    {% endif %}
+                    {% endfor %}
+
+                    _edrone.product_titles = items_titles.join("|");
+                    _edrone.product_skus = items_skus.join("|");
+                    _edrone.product_ids = items_ids.join("|");
+                    _edrone.product_images = items_images.join("|");
+                    _edrone.product_urls = items_url.join("|");
+                    _edrone.product_counts = items_counts.join("|");
+
+                    _edrone.action_type = 'order';
+                    _edrone.order_id = '{{ page.order.orderNumber |url_encode }}';
+                    _edrone.base_currency = '{{ header.activeCurrency.isoCode |url_encode }}';
+                    _edrone.order_currency = '{{ header.activeCurrency.isoCode |url_encode }}';
+                    _edrone.base_payment_value = '{{ page.order.amountTotal |url_encode }}';
+                    _edrone.order_payment_value = '{{ page.order.amountTotal |url_encode }}';
+                }
+
+                var doc = document.createElement('script');
+                doc.type = 'text/javascript';
+                doc.async = true;
+                doc.src = ('https:' == document.location.protocol ? 'https:' : 'http:') + srcjs;
+                var s = document.getElementsByTagName('script')[0];
+                s.parentNode.insertBefore(doc, s);
+            });
+    </script>
+{% endblock %}
