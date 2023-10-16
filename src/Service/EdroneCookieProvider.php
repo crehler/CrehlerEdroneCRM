@@ -11,8 +11,8 @@ use function array_merge;
 class EdroneCookieProvider implements CookieProviderInterface
 {
     private const EDRONE_COOKIE = [
-        'snippet_name' => 'crehlerEdroneCRM.cookie.edroneName',
-        'snippet_description' => 'crehlerEdroneCRM.cookie.edroneDescription',
+        'snippet_name' => 'crehlerEdroneCrm.cookie.edroneName',
+        'snippet_description' => 'crehlerEdroneCrm.cookie.edroneDescription',
         'cookie' => 'edrone-crm-enabled',
         'expiration' => '30',
         'value' => '1',
