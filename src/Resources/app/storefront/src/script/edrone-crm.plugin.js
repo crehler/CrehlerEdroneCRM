@@ -3,37 +3,29 @@ import { COOKIE_CONFIGURATION_UPDATE } from 'src/plugin/cookie/cookie-configurat
 import CookieStorageHelper from 'src/helper/storage/cookie-storage.helper';
 import DeviceDetection from 'src/helper/device-detection.helper';
 
-
-export default class EdronePlugin extends Plugin {
-
+export default class EdroneCrmPlugin extends Plugin {
     static options = {
-        'buyButtonSelector': '.btn-buy',
-        'productCardSelector': '.product-box',
-        'listingBreadcrumbSelector': '.breadcrumb',
-        'productPageSelector': '.is-ctl-product',
-        'imageWrapperSelector': '.product-image-wrapper',
-        'productLinkSelector': '.product-name',
-        'productNameSelector': 'input[name="product-name"]',
-        'productIdSelector': 'input[name="product-id"]',
-        'productNumberSelector': 'meta[itemprop="mpn"]'
+        buyButtonSelector: '.btn-buy',
+        productCardSelector: '.product-box',
+        listingBreadcrumbSelector: '.breadcrumb',
+        productPageSelector: '.is-ctl-product',
+        imageWrapperSelector: '.product-image-wrapper',
+        productLinkSelector: '.product-name',
+        productNameSelector: 'input[name="product-name"]',
+        productIdSelector: 'input[name="product-id"]',
+        productNumberSelector: 'meta[itemprop="mpn"]'
     };
 
-    /**
-     *  Plugin initialization
-     *
-     * @public
-     */
     init() {
-        this.cookieEnabledName = 'edrone-crm-enabled';
+        this._cookieEnabledName = 'edrone-crm-enabled';
 
         this.handleCookieChangeEvent();
 
-        if (!CookieStorageHelper.getItem(this.cookieEnabledName)) {
+        if (!CookieStorageHelper.getItem(this._cookieEnabledName)) {
             return;
         }
 
         this.startEdroneCrm();
-
     }
 
     startEdroneCrm() {
@@ -48,20 +40,15 @@ export default class EdronePlugin extends Plugin {
     handleCookies(cookieUpdateEvent) {
         const updatedCookies = cookieUpdateEvent.detail;
 
-        if (!updatedCookies.hasOwnProperty(this.cookieEnabledName)) {
+        if (!updatedCookies.hasOwnProperty(this._cookieEnabledName)) {
             return;
         }
 
-        if (updatedCookies[this.cookieEnabledName]) {
+        if (updatedCookies[this._cookieEnabledName]) {
             this.startEdroneCrm();
         }
     }
 
-    /**
-     * Register all needed events
-     *
-     * @private
-     */
     _registerEvents() {
         const eventType = (DeviceDetection.isTouchDevice()) ? 'touchend' : 'click';
 
@@ -69,25 +56,15 @@ export default class EdronePlugin extends Plugin {
             .forEach(el => el.addEventListener(eventType, this._onAddToCard.bind(this)));
     }
 
-    /**
-     * event on AddToCard
-     *
-     * @private
-     */
     _onAddToCard(e) {
         if (!document.querySelector(this.options.productPageSelector)) {
             this._prepareEdrone(e);
         }
 
-        window._edrone.action_type = 'add_to_cart'
-        window._edrone.init()
+        window._edrone.action_type = 'add_to_cart';
+        window._edrone.init();
     }
 
-    /**
-     * function prepare edrone data for add to card event
-     *
-     * @private
-     */
     _prepareEdrone(e) {
         const productBox = e.target.closest(this.options.productCardSelector);
 

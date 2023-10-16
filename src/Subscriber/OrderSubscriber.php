@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Crehler\EdroneCrm\Subscriber;
 
@@ -10,20 +12,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class OrderSubscriber implements EventSubscriberInterface
 {
-    /**
-     * @var EdroneService
-     */
-    private $edroneService;
-
-    /**
-     * OrderSubscriber constructor.
-     * @param EdroneService $edroneService
-     */
-    public function __construct(EdroneService $edroneService)
+    public function __construct(private readonly EdroneService $edroneService)
     {
-        $this->edroneService = $edroneService;
     }
-
 
     public static function getSubscribedEvents(): array
     {
@@ -34,13 +25,13 @@ class OrderSubscriber implements EventSubscriberInterface
 
     public function onOrderWritten(EntityWrittenEvent $event): void
     {
-        if ($event->getEntityName() !== OrderDefinition::ENTITY_NAME) {
+        if (OrderDefinition::ENTITY_NAME !== $event->getEntityName()) {
             return;
         }
 
         foreach ($event->getWriteResults() as $writeResult) {
-
             $payload = $writeResult->getPayload();
+
             if (empty($payload)) {
                 continue;
             }
