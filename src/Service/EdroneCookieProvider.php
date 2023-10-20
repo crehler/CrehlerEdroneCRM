@@ -1,35 +1,34 @@
-<?php declare(strict_types=1);
+<?php
 
-namespace Crehler\EdroneCrm\Cookie;
+declare(strict_types=1);
+
+namespace Crehler\EdroneCrm\Service;
 
 use Shopware\Storefront\Framework\Cookie\CookieProviderInterface;
 
+use function array_merge;
 
 class EdroneCookieProvider implements CookieProviderInterface
 {
-
-    private $originalService;
-
-    public function __construct(CookieProviderInterface $service)
-    {
-        $this->originalService = $service;
-    }
-
-    private const edroneCookie = [
-        'snippet_name' => 'cookie.edroneName',
-        'snippet_description' => 'cookie.edroneDescription',
+    private const EDRONE_COOKIE = [
+        'snippet_name' => 'crehlerEdroneCrm.cookie.edroneName',
+        'snippet_description' => 'crehlerEdroneCrm.cookie.edroneDescription',
         'cookie' => 'edrone-crm-enabled',
         'expiration' => '30',
         'value' => '1',
         'default' => true
     ];
 
+    public function __construct(private readonly CookieProviderInterface $originalService)
+    {
+    }
+
     public function getCookieGroups(): array
     {
         return array_merge(
             $this->originalService->getCookieGroups(),
             [
-                self::edroneCookie
+                self::EDRONE_COOKIE
             ]
         );
     }

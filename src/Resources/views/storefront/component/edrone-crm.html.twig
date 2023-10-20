@@ -12,12 +12,12 @@
                 _edrone.platform = 'shopware6';
 
                 {% if not context.customer.guest %}
-                _edrone.email = '{{ context.customer.email |url_encode }}';
-                _edrone.subscriber_status = '{{ context.customer.newsletter |url_encode }}';
-                _edrone.first_name = '{{ context.customer.firstName |url_encode }}';
-                _edrone.last_name = '{{ context.customer.lastName |url_encode }}';
-                _edrone.country = '{{ context.customer.defaultBillingAddress.country.iso |url_encode }}';
-                _edrone.city = '{{ context.customer.defaultBillingAddress.city |url_encode }}';
+                    _edrone.email = '{{ context.customer.email |url_encode }}';
+                    _edrone.subscriber_status = '{{ context.customer.newsletter |url_encode }}';
+                    _edrone.first_name = '{{ context.customer.firstName |url_encode }}';
+                    _edrone.last_name = '{{ context.customer.lastName |url_encode }}';
+                    _edrone.country = '{{ context.customer.defaultBillingAddress.country.iso |url_encode }}';
+                    _edrone.city = '{{ context.customer.defaultBillingAddress.city |url_encode }}';
                 {% endif %}
 
                 if (document.querySelector('.is-ctl-product')) {
@@ -36,21 +36,23 @@
                 }
 
                 if (document.querySelector('.is-ctl-checkout.is-act-finishpage')) {
-                    let items_titles = [];
-                    let items_skus = [];
-                    let items_ids = [];
-                    let items_images = [];
-                    let items_url = [];
-                    let items_counts = [];
+                    const
+                        items_titles = [],
+                        items_skus = [],
+                        items_ids = [],
+                        items_images = [],
+                        items_url = [],
+                        items_counts = [];
+
                     {% for lineItem in page.order.lineItems %}
-                    {% if lineItem.type == "product" %}
-                    items_titles.push('{{ lineItem.label }}');
-                    items_skus.push('{{ lineItem.payload.productNumber }}');
-                    items_ids.push('{{ lineItem.productId }}');
-                    items_images.push('{{ lineItem.cover.url }}');
-                    items_url.push('{{ seoUrl('frontend.detail.page', {'productId': lineItem.productId}) }}');
-                    items_counts.push('{{ lineItem.quantity }}');
-                    {% endif %}
+                        {% if lineItem.type == "product" %}
+                            items_titles.push('{{ lineItem.label }}');
+                            items_skus.push('{{ lineItem.payload.productNumber }}');
+                            items_ids.push('{{ lineItem.productId }}');
+                            items_images.push('{{ lineItem.cover.url }}');
+                            items_url.push('{{ seoUrl('frontend.detail.page', {'productId': lineItem.productId}) }}');
+                            items_counts.push('{{ lineItem.quantity }}');
+                        {% endif %}
                     {% endfor %}
 
                     _edrone.product_titles = items_titles.join("|");
@@ -68,11 +70,14 @@
                     _edrone.order_payment_value = '{{ page.order.amountTotal |url_encode }}';
                 }
 
-                var doc = document.createElement('script');
+                const
+                    doc = document.createElement('script'),
+                    s = document.getElementsByTagName('script')[0];
+
                 doc.type = 'text/javascript';
                 doc.async = true;
-                doc.src = ('https:' == document.location.protocol ? 'https:' : 'http:') + srcjs;
-                var s = document.getElementsByTagName('script')[0];
+                doc.src = document.location.protocol + srcjs;
+
                 s.parentNode.insertBefore(doc, s);
             });
     </script>

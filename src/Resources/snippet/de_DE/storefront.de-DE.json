@@ -1,6 +1,8 @@
 {
-    "cookie": {
-        "edroneName" : "Edrone Crm - Statistik",
-        "edroneDescription": "Diese Cookies werden für Statistiken und Shop Performance Metriken genutzt."
+    "crehlerEdroneCrm": {
+        "cookie": {
+            "edroneName": "Edrone Crm - Statistik",
+            "edroneDescription": "Diese Cookies werden für Statistiken und Shop Performance Metriken genutzt."
+        }
     }
 }

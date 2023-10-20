@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Crehler\EdroneCrm\Subscriber;
 
@@ -10,60 +12,54 @@ use Shopware\Core\Content\Newsletter\Event\NewsletterRegisterEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Shopware\Storefront\Page\Product\ProductPageLoadedEvent;
 
-class StorefrontSubscriber implements EventSubscriberInterface
+readonly class StorefrontSubscriber implements EventSubscriberInterface
 {
-    /**
-     * @var EdroneService
-     */
-    private $edroneService;
-
-    /**
-     * StorefrontSubscriber constructor.
-     * @param $edroneService
-     */
-    public function __construct(EdroneService $edroneService)
+    public function __construct(private EdroneService $edroneService)
     {
-        $this->edroneService = $edroneService;
     }
 
-    /**
-     * @return array
-     */
     public static function getSubscribedEvents(): array
     {
         return [
-            ProductPageLoadedEvent::class => 'onPage',
-            CmsPageLoadedEvent::class => 'onCmsPage',
+            ProductPageLoadedEvent::class => 'onProductPageLoaded',
+            CmsPageLoadedEvent::class => 'onCmsPageLoaded',
             NewsletterRegisterEvent::class => 'onNewsletterRegister',
             NewsletterConfirmEvent::class => 'onNewsletterConfirm',
         ];
     }
 
-    public function onCmsPage(CmsPageLoadedEvent $event): void
-    {
-//        $result = $event->getResult();
-    }
-
-    public function onPage(ProductPageLoadedEvent $event): void
+    public function onProductPageLoaded(ProductPageLoadedEvent $event): void
     {
         $page = $event->getPage();
         $product = $page->getProduct();
-        $edroneProductCategory = $this->edroneService->createProductCategoryStruct($page->getHeader()->getNavigation()->getTree(), $product);
+        $edroneProductCategory = $this->edroneService->createProductCategoryStruct(
+            $page->getHeader()->getNavigation()->getTree(),
+            $product
+        );
 
-        if($edroneProductCategory instanceof EdroneProductCategoryStruct) {
+        if ($edroneProductCategory instanceof EdroneProductCategoryStruct) {
             $product->addExtension('edroneProductCategory', $edroneProductCategory);
         }
     }
 
+    public function onCmsPageLoaded(CmsPageLoadedEvent $event): void
+    {
+//        $result = $event->getResult();
+    }
+
     public function onNewsletterRegister(NewsletterRegisterEvent $event): void
     {
-        $newsletterRecipient = $event->getNewsletterRecipient();
-        $this->edroneService->subscribe($newsletterRecipient->getFirstName(), $newsletterRecipient->getEmail());
+        $this->edroneService->subscribe(
+            $event->getNewsletterRecipient()->getFirstName(),
+            $event->getNewsletterRecipient()->getEmail()
+        );
     }
 
     public function onNewsletterConfirm(NewsletterConfirmEvent $event): void
     {
-        $newsletterRecipient = $event->getNewsletterRecipient();
-        $this->edroneService->subscribe($newsletterRecipient->getFirstName(), $newsletterRecipient->getEmail());
+        $this->edroneService->subscribe(
+            $event->getNewsletterRecipient()->getFirstName(),
+            $event->getNewsletterRecipient()->getEmail()
+        );
     }
 }

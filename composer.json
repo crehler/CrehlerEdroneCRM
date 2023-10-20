@@ -3,7 +3,7 @@
     "description": "Crehler Edrone Crm",
     "type": "shopware-platform-plugin",
     "license": "proprietary",
-    "version": "1.0.1",
+    "version": "2.0.0",
     "authors": [
         {
             "name": "Crehler Sp. z o. o.",
@@ -46,8 +46,8 @@
         }
     },
     "require": {
-        "shopware/core": ">=6.4.0.0 <6.5",
-        "shopware/storefront": ">=6.4.0.0 <6.5",
+        "shopware/core": "^6.5",
+        "shopware/storefront": "^6.5",
         "ext-curl": "*"
     }
 }
