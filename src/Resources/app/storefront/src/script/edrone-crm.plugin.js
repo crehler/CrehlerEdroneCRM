@@ -29,8 +29,10 @@ export default class EdroneCrmPlugin extends Plugin {
     }
 
     startEdroneCrm() {
-        window.edroneCrmCallback();
-        this._registerEvents();
+        if ('function' === typeof window.edroneCrmCallback) {
+            window.edroneCrmCallback();
+            this._registerEvents();
+        }
     }
 
     handleCookieChangeEvent() {
