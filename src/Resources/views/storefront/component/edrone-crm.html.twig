@@ -1,15 +1,16 @@
 {% block component_head_edrone_crm %}
     {% set config = config('CrehlerEdroneCrm.config') %}
-    {% set edroneCrm = page.extensions.edroneCrm %}
-    <script type="text/javascript">
-        window.edroneCrmCallback = (function () {
+
+    {% if config.appId is not empty %}
+        <script type="text/javascript">
+            window.edroneCrmCallback = (function () {
                 let srcjs = "//d3bo67muzbfgtl.cloudfront.net/edrone_2_0.js";
 
                 window._edrone = window._edrone || {};
                 _edrone.app_id = '{{ config.appId }}';
-                _edrone.version = '1.0.0';
-                _edrone.platform_version = '1.0.0';
-                _edrone.platform = 'shopware6';
+                _edrone.version = '{{ constant('Crehler\\EdroneCrm\\CrehlerEdroneCrm::VERSION') }}';
+                _edrone.platform = '{{ constant('Crehler\\EdroneCrm\\CrehlerEdroneCrm::PLATFORM') }}';
+                _edrone.platform_version = '{{ constant('Crehler\\EdroneCrm\\CrehlerEdroneCrm::PLATFORM_VERSION') }}';
 
                 {% if not context.customer.guest %}
                     _edrone.email = '{{ context.customer.email |url_encode }}';
@@ -80,5 +81,6 @@
 
                 s.parentNode.insertBefore(doc, s);
             });
-    </script>
+        </script>
+    {% endif %}
 {% endblock %}

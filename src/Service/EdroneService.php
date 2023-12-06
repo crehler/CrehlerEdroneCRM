@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Crehler\EdroneCrm\Service;
 
+use Crehler\EdroneCrm\CrehlerEdroneCrm;
 use Crehler\EdroneCrm\Struct\EdroneProductCategoryStruct;
 use Shopware\Core\Checkout\Order\OrderStates;
 use Shopware\Core\Content\Category\Tree\TreeItem;
@@ -50,11 +51,9 @@ class EdroneService
         }
     }
 
-    public function subscribe(string $firstName, string $email): void
+    public function subscribe(?string $firstName, string $email): void
     {
-        if (null !== $this->configService->getAppId()) {
-            $this->sendPost($this->createSubscribeData($firstName, $email));
-        }
+        $this->sendPost($this->createSubscribeData($firstName, $email));
     }
 
     public function createProductCategoryStruct(
@@ -85,7 +84,7 @@ class EdroneService
             $context
         )->get($orderId);
 
-        if (!$order instanceof OrderEntity || null === $this->configService->getAppId()) {
+        if (!$order instanceof OrderEntity) {
             return;
         }
 
@@ -109,31 +108,37 @@ class EdroneService
     private function createOrderData(OrderEntity $order): array
     {
         return [
-            'version' => '1.0.0',
-            'platform' => 'shopware6',
             'app_id' => $this->configService->getAppId(),
+            'version' => CrehlerEdroneCrm::VERSION,
+            'platform' => CrehlerEdroneCrm::PLATFORM,
+            'platform_version' => CrehlerEdroneCrm::PLATFORM_VERSION,
+            'sender_type' => 'server',
             'email' => $order->getOrderCustomer()->getEmail(),
             'order_id' => $order->getOrderNumber(),
             'action_type' => 'order_cancel',
-            'sender_type' => 'server'
         ];
     }
 
-    private function createSubscribeData(string $firstName, string $email): array
+    private function createSubscribeData(?string $firstName, string $email): array
     {
         return [
             'app_id' => $this->configService->getAppId(),
-            'version' => '1.0.0',
-            'platform' => 'shopware6',
-            'first_name' => $firstName,
-            'email' => $email,
+            'version' => CrehlerEdroneCrm::VERSION,
+            'platform' => CrehlerEdroneCrm::PLATFORM,
+            'platform_version' => CrehlerEdroneCrm::PLATFORM_VERSION,
             'action_type' => 'subscribe',
-            'sender_type' => 'server'
+            'sender_type' => 'server',
+            'first_name' => $firstName ?? '',
+            'email' => $email,
         ];
     }
 
     private function sendPost(array $params): void
     {
+        if (null === $this->configService->getAppId()) {
+            return;
+        }
+
         $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, self::EDRONE_URL);
