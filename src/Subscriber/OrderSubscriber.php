@@ -32,7 +32,7 @@ class OrderSubscriber implements EventSubscriberInterface
         foreach ($event->getWriteResults() as $writeResult) {
             $payload = $writeResult->getPayload();
 
-            if (empty($payload)) {
+            if (!isset($payload['id'], $payload['stateId'])) {
                 continue;
             }
 
