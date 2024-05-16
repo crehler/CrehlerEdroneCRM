@@ -22,7 +22,6 @@ readonly class StorefrontSubscriber implements EventSubscriberInterface
     {
         return [
             ProductPageLoadedEvent::class => 'onProductPageLoaded',
-            CmsPageLoadedEvent::class => 'onCmsPageLoaded',
             NewsletterRegisterEvent::class => 'onNewsletterRegister',
             NewsletterConfirmEvent::class => 'onNewsletterConfirm',
         ];
