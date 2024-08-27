@@ -1,0 +1,10 @@
+name: Auto tag
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    uses: crehler-com/CrehlerGithubWorkflows/.github/workflows/auto-tag.yml@master

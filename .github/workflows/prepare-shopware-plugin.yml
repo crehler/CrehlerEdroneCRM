@@ -1,0 +1,10 @@
+name: Prepare shopware plugin
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened, synchronize]
+
+jobs:
+  build:
+    uses: crehler-com/CrehlerGithubWorkflows/.github/workflows/prepare-shopware-plugin.yml@master
+    secrets: inherit

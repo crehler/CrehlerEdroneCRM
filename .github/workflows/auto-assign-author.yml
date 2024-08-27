@@ -1,0 +1,9 @@
+name: Auto assign author
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened, synchronize]
+
+jobs:
+  build:
+    uses: crehler-com/CrehlerGithubWorkflows/.github/workflows/auto-assign-author.yml@master
