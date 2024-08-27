@@ -9,6 +9,7 @@ use Crehler\EdroneCrm\Struct\EdroneProductCategoryStruct;
 use Shopware\Core\Content\Cms\Events\CmsPageLoadedEvent;
 use Shopware\Core\Content\Newsletter\Event\NewsletterConfirmEvent;
 use Shopware\Core\Content\Newsletter\Event\NewsletterRegisterEvent;
+use Shopware\Storefront\Page\Checkout\Finish\CheckoutFinishPageOrderCriteriaEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Shopware\Storefront\Page\Product\ProductPageLoadedEvent;
 
@@ -24,6 +25,7 @@ readonly class StorefrontSubscriber implements EventSubscriberInterface
             ProductPageLoadedEvent::class => 'onProductPageLoaded',
             NewsletterRegisterEvent::class => 'onNewsletterRegister',
             NewsletterConfirmEvent::class => 'onNewsletterConfirm',
+            CheckoutFinishPageOrderCriteriaEvent::class => 'onConfirmPageCriteriaLoaded',
         ];
     }
 
@@ -60,5 +62,12 @@ readonly class StorefrontSubscriber implements EventSubscriberInterface
             $event->getNewsletterRecipient()->getFirstName(),
             $event->getNewsletterRecipient()->getEmail()
         );
+    }
+
+    public function onConfirmPageCriteriaLoaded(CheckoutFinishPageOrderCriteriaEvent $event): void
+    {
+        $criteria = $event->getCriteria();
+        $criteria->addAssociation('currency');
+        $criteria->addAssociation('language');
     }
 }

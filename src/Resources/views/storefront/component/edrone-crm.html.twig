@@ -27,6 +27,7 @@
                     _edrone.product_ids = '{{ page.product.id }}';
                     _edrone.product_titles = '{{ page.product.translated.name |url_encode }}';
                     _edrone.product_images = '{{ page.product.cover.media.url |url_encode }}';
+                    _edrone.shop_lang = document.querySelector('html').lang;
                     _edrone.product_urls = window.location.href;
                     _edrone.product_availability = '{% if page.product.available %}1{% else %}0{% endif %}';
 
@@ -36,6 +37,12 @@
                     {% endif %}
                 }
 
+                if (document.querySelector('.is-current-category')) {
+                    _edrone.action_type = 'category_view';
+                    _edrone.product_category_ids = '{{ page.navigationId |url_encode }}';
+                    _edrone.product_category_names = '{{ page.metaInformation.metaTitle |url_encode }}';
+                }
+
                 if (document.querySelector('.is-ctl-checkout.is-act-finishpage')) {
                     const
                         items_titles = [],
@@ -43,7 +50,8 @@
                         items_ids = [],
                         items_images = [],
                         items_url = [],
-                        items_counts = [];
+                        items_counts = [],
+                        items_categories_ids = [];
 
                     {% for lineItem in page.order.lineItems %}
                         {% if lineItem.type == "product" %}
@@ -53,12 +61,17 @@
                             items_images.push('{{ lineItem.cover.url }}');
                             items_url.push('{{ seoUrl('frontend.detail.page', {'productId': lineItem.productId}) }}');
                             items_counts.push('{{ lineItem.quantity }}');
+
+                            {% for categoryId in lineItem.payload.categoryIds %}
+                                items_categories_ids.push('{{ categoryId }}');
+                            {% endfor %}
                         {% endif %}
                     {% endfor %}
 
                     _edrone.product_titles = items_titles.join("|");
                     _edrone.product_skus = items_skus.join("|");
                     _edrone.product_ids = items_ids.join("|");
+                    _edrone.product_category_ids = items_categories_ids.join("|");
                     _edrone.product_images = items_images.join("|");
                     _edrone.product_urls = items_url.join("|");
                     _edrone.product_counts = items_counts.join("|");
@@ -66,9 +79,11 @@
                     _edrone.action_type = 'order';
                     _edrone.order_id = '{{ page.order.orderNumber |url_encode }}';
                     _edrone.base_currency = '{{ header.activeCurrency.isoCode |url_encode }}';
-                    _edrone.order_currency = '{{ header.activeCurrency.isoCode |url_encode }}';
                     _edrone.base_payment_value = '{{ page.order.amountTotal |url_encode }}';
                     _edrone.order_payment_value = '{{ page.order.amountTotal |url_encode }}';
+                    _edrone.shop_lang = '{{ page.order.language.name |url_encode }}';
+                    _edrone.order_currency = '{{ page.order.currency.shortName |url_encode }}';
+                    _edrone.subscriber_status = '{{ page.order.orderCustomer.customer.guest ? '0' : '1' |url_encode }}';
                 }
 
                 const
