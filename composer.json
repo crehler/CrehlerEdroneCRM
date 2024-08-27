@@ -46,8 +46,8 @@
         }
     },
     "require": {
-        "shopware/core": "^6.6",
-        "shopware/storefront": "^6.6",
+        "shopware/core": ">=6.4.0.0 <6.5",
+        "shopware/storefront": ">=6.4.0.0 <6.5",
         "ext-curl": "*"
     }
 }
