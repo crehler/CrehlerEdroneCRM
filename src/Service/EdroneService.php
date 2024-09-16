@@ -190,7 +190,7 @@ class EdroneService
             $product_titles[] = $lineItem->getLabel();
             $product_skus[] = $lineItem->getProduct()->getProductNumber();
             $product_ids[] = $lineItem->getId();
-            $product_images[] = $lineItem->getProduct()->getMedia()->first()->getMedia()->getUrl();
+            $product_images[] = $lineItem->getProduct()?->getMedia()?->first()?->getMedia()?->getUrl();
             $product_urls[] = $this->setUrlForProduct($lineItem->getProductId(), $context, $salesChannelContext);;
             $product_counts[] = $lineItem->getQuantity();
 
