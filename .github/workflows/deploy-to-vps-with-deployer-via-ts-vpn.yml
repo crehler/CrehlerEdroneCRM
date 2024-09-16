@@ -1,0 +1,38 @@
+name: Deploy with Deployer via Tailscale VPN
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        description: 'Environment to deploy to'
+        type: string
+      use-ts-vpn:
+        description: 'Use tailscale VPN to connect to VPS'
+        required: false
+        default: 'true'
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ${{ vars.RUNS_ON }}
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Connect to Tailscale VPN
+        if: inputs.use-ts-vpn == 'true'
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          version: ${{ vars.TAILSCALE_VERSION }}
+          args: --exit-node=${{ vars.EXIT_NODE_VPN_IP }}
+          tags: ${{ vars.TAG_VPN }}
+
+      - name: Deploy code using Deployer
+        uses: deployphp/action@v1
+        with:
+          dep: deploy ${{ inputs.environment }}
+          deployer-version: ${{ vars.DEPLOYER_VERSION }}
+          private-key: ${{ secrets.PRIVATE_KEY }}

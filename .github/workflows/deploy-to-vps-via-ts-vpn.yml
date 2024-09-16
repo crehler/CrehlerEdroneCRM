@@ -1,0 +1,43 @@
+name: Deploy to VPS via Tailscale VPN
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        type: string
+      use-ts-vpn:
+        description: 'Use tailscale VPN to connect to VPS'
+        required: false
+        default: 'true'
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ${{ vars.RUNS_ON }}
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Connect to Tailscale VPN
+        if: inputs.use-ts-vpn == 'true'
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          version: ${{ vars.TAILSCALE_VERSION }}
+          args: --exit-node=${{ vars.EXIT_NODE_VPN_IP }} --reset
+          tags: ${{ vars.TAG_VPN }}
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.PRIVATE_KEY }}
+          known_hosts: ${{ secrets.KNOWN_HOSTS }}
+
+      - name: Connect to VPS and run commands
+        run: |
+          ssh ${{ vars.SSH_OPTIONS }} ${{ vars.SSH_USERNAME }}@${{ vars.SSH_HOST }} "${{ vars.SSH_COMMANDS }}"

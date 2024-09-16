@@ -1,0 +1,24 @@
+name: Build and deploy storybook
+
+on:
+  workflow_call:
+
+jobs:
+  build-and-deploy:
+    runs-on: ${{ vars.RUNS_ON }}
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install and build storybook
+        if: github.event.action != 'closed' # You might want to skip the build if the PR has been closed
+        run: |
+          npm install
+          npx nuxi prepare
+          npm run build-storybook
+
+      - name: Deploy preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: ./storybook-static/

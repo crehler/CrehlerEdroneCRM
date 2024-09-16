@@ -1,0 +1,109 @@
+name: Store
+on:
+  workflow_call:
+    inputs:
+      extensionName:
+        required: true
+        type: string
+      shopwareVersion:
+        description: 'The shopware version to build the extension with'
+        required: false
+        type: string
+        default: '6.4.0'
+    secrets:
+      accountUser:
+        required: true
+      accountPassword:
+        required: true
+      ghToken:
+        required: true
+
+env:
+  EXTENSION_NAME: ${{ inputs.extensionName }}
+  ACCOUNT_USER: ${{ secrets.accountUser }}
+  ACCOUNT_PASSWORD: ${{ secrets.accountPassword }}
+
+jobs:
+  Build:
+    container: ghcr.io/friendsofshopware/platform-plugin-dev:v${{ inputs.shopwareVersion }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Specify safe directory for git
+        run: |
+          git config --global --add safe.directory $(pwd)
+
+      - name: Build & create zip
+        run: |
+          SHOPWARE_PROJECT_ROOT=/opt/shopware shopware-cli extension zip . --disable-git
+
+      - name: Upload Artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.EXTENSION_NAME }}
+          path: ${{ env.EXTENSION_NAME }}.zip
+
+      - name: Get version
+        run: |
+          echo "EXTENSION_VERSION=$(jq ".version" composer.json -r)" >> $GITHUB_ENV
+
+      - uses: mukunku/tag-exists-action@v1.6.0
+        id: checkTag
+        with:
+          tag: ${{ env.EXTENSION_VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.ghToken }}
+
+      - name: Validate Zip
+        if: steps.checkTag.outputs.exists != 'true'
+        run: plugin-uploader ext:validate $(pwd)/${EXTENSION_NAME}.zip
+
+      - name: StoreUpdate
+        if: steps.checkTag.outputs.exists != 'true' || contains(github.event.head_commit.message, '[store update]')
+        run: plugin-uploader ext:update $(pwd)/
+
+      - name: StoreUpload
+        if: steps.checkTag.outputs.exists != 'true'
+        run: plugin-uploader ext:upload $(pwd)/${EXTENSION_NAME}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.ghToken }}
+
+      - name: Unzip
+        run: |
+          unzip -o -q "${EXTENSION_NAME}.zip" -d ./toDeploy
+          mv "${EXTENSION_NAME}.zip" /tmp/
+          find ./ -maxdepth 1 ! -name "toDeploy" ! -name ".git" ! -name "." ! -name ".." -exec rm -rf {} \;
+          mv ./toDeploy/${EXTENSION_NAME}/* ./
+          rm -rf ./toDeploy
+          rm -rf ./vendor
+
+      - name: Generate changelog
+        if: steps.checkTag.outputs.exists != 'true'
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          tag_prefix: ""
+          github_token: ${{ secrets.ghToken }}
+          custom_tag: ${{ env.EXTENSION_VERSION }}
+          dry_run: true
+
+      - name: commit
+        if: steps.checkTag.outputs.exists != 'true'
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+          git add -f *
+          git commit -m "chore: Build release"
+          git tag ${EXTENSION_VERSION}
+          git push origin ${EXTENSION_VERSION}
+
+      - name: Create a GitHub release
+        if: steps.checkTag.outputs.exists != 'true'
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: /tmp/${{ env.EXTENSION_NAME }}.zip
+          tag: ${{ env.EXTENSION_VERSION }}
+          name: ${{ env.EXTENSION_VERSION }}
+          body: ${{ steps.tag_version.outputs.changelog }}
