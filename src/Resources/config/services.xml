@@ -14,7 +14,6 @@
             <argument type="service" id="Crehler\EdroneCrm\Service\ConfigService"/>
             <argument type="service" id="order.repository"/>
             <argument type="service" id="state_machine_state.repository"/>
-            <argument type="service" id="sales_channel_domain.repository" />
             <argument type="service" id="Shopware\Core\Content\Seo\SeoUrlPlaceholderHandlerInterface" />
             <argument type="service" id="Shopware\Core\System\SalesChannel\Context\SalesChannelContextFactory"/>
 

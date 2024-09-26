@@ -8,20 +8,9 @@ on:
       shopwareVersion:
         description: 'The shopware version to build the extension with'
         required: false
-        type: string
-        default: '6.4.0'
     secrets:
-      accountUser:
-        required: true
-      accountPassword:
-        required: true
       ghToken:
         required: true
-
-env:
-  EXTENSION_NAME: ${{ inputs.extensionName }}
-  ACCOUNT_USER: ${{ secrets.accountUser }}
-  ACCOUNT_PASSWORD: ${{ secrets.accountPassword }}
 
 jobs:
   Build:
@@ -59,16 +48,6 @@ jobs:
       - name: Validate Zip
         if: steps.checkTag.outputs.exists != 'true'
         run: plugin-uploader ext:validate $(pwd)/${EXTENSION_NAME}.zip
-
-      - name: StoreUpdate
-        if: steps.checkTag.outputs.exists != 'true' || contains(github.event.head_commit.message, '[store update]')
-        run: plugin-uploader ext:update $(pwd)/
-
-      - name: StoreUpload
-        if: steps.checkTag.outputs.exists != 'true'
-        run: plugin-uploader ext:upload $(pwd)/${EXTENSION_NAME}.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.ghToken }}
 
       - name: Unzip
         run: |

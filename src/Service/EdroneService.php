@@ -7,6 +7,7 @@ namespace Crehler\EdroneCrm\Service;
 use Crehler\EdroneCrm\CrehlerEdroneCrm;
 use Crehler\EdroneCrm\Enums\ActionType;
 use Crehler\EdroneCrm\Struct\EdroneProductCategoryStruct;
+use GuzzleHttp\Client;
 use Shopware\Core\Checkout\Order\Aggregate\OrderCustomer\OrderCustomerEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderLineItem\OrderLineItemCollection;
 use Shopware\Core\Checkout\Order\Aggregate\OrderLineItem\OrderLineItemEntity;
@@ -14,45 +15,28 @@ use Shopware\Core\Checkout\Order\OrderStates;
 use Shopware\Core\Content\Category\Tree\TreeItem;
 use Shopware\Core\Content\Product\SalesChannel\SalesChannelProductEntity;
 use Shopware\Core\Content\Seo\SeoUrlPlaceholderHandler;
+use Shopware\Core\Framework\Api\Context\AdminApiSource;
+use Shopware\Core\Framework\Api\Context\SalesChannelApiSource;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
-use Shopware\Core\Framework\Test\Seo\SeoUrl\SeoUrlRepositoryTest;
-use Shopware\Core\System\SalesChannel\Aggregate\SalesChannelDomain\SalesChannelDomainEntity;
 use Shopware\Core\System\SalesChannel\Context\AbstractSalesChannelContextFactory;
-use Shopware\Core\System\SalesChannel\Context\SalesChannelContextFactory;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
-use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 use Shopware\Core\System\StateMachine\Aggregation\StateMachineState\StateMachineStateEntity;
 
-use stdClass;
 use function array_keys;
-use function count;
-use function curl_close;
-use function curl_exec;
-use function curl_init;
-use function curl_setopt;
 use function implode;
-
-use const CURLOPT_URL;
-use const CURLOPT_RETURNTRANSFER;
-use const CURLOPT_HEADER;
-use const CURLOPT_POST;
-use const CURLOPT_POSTFIELDS;
 
 class EdroneService
 {
     private const EDRONE_URL = 'https://api.edrone.me/trace';
 
-    private ?array $breadcrumb;
 
     public function __construct(
         private readonly ConfigServiceInterface             $configService,
         private readonly EntityRepository                   $orderRepository,
         private readonly EntityRepository                   $stateMachineRepository,
-        private readonly EntityRepository                   $salesChannelDomainRepository,
         private readonly SeoUrlPlaceholderHandler           $seoUrlPlaceholderHandler,
         private readonly AbstractSalesChannelContextFactory $salesChannelContextFactory,
     )
@@ -68,18 +52,24 @@ class EdroneService
     {
         $newOrderStatus = $this->getStatus($newOrderStatusId, $context);
 
-        if (null !== $newOrderStatus && OrderStates::STATE_CANCELLED === $newOrderStatus->getTechnicalName()) {
+        if ($newOrderStatus !== null
+            && OrderStates::STATE_CANCELLED === $newOrderStatus->getTechnicalName()
+            && $context->getSource() instanceof AdminApiSource
+        ) {
             $this->orderCancel($orderId, $context);
         }
 
-        if ($newOrderStatus->getTechnicalName() === OrderStates::STATE_OPEN) {
+        if ($newOrderStatus !== null
+            && $newOrderStatus->getTechnicalName() === OrderStates::STATE_OPEN
+            && $context->getSource() instanceof SalesChannelApiSource
+        ) {
             $this->orderSubmit(orderId: $orderId, context: $context);
         }
     }
 
     public function subscribe(?string $firstName, string $email): void
     {
-        $this->sendPost($this->createSubscribeData($firstName, $email));
+        $this->sendData($this->createSubscribeData($firstName, $email));
     }
 
     public function createProductCategoryStruct(
@@ -87,14 +77,14 @@ class EdroneService
         SalesChannelProductEntity $product
     ): ?EdroneProductCategoryStruct
     {
-        $this->searchBreadcrumbs($navigationTree, $product);
-        if (empty($this->breadcrumb)) {
+        $breadcrumb = $this->searchBreadcrumbs($navigationTree, $product);
+        if (empty($breadcrumb)) {
             return null;
         }
 
         return (new EdroneProductCategoryStruct())
-            ->setProductCategoryIds(implode('~', array_keys($this->breadcrumb)))
-            ->setProductCategoryNames(implode('~', array_values($this->breadcrumb)));
+            ->setProductCategoryIds(implode('~', array_keys($breadcrumb)))
+            ->setProductCategoryNames(implode('~', array_values($breadcrumb)));
     }
 
     private function getStatus(string $newOrderStatusId, Context $context): ?StateMachineStateEntity
@@ -117,38 +107,43 @@ class EdroneService
             return;
         }
 
-        $this->sendProduct($this->createOrderData($order, $context, ActionType::ORDER));
+        $this->sendData($this->createOrderData(order: $order, actionType: ActionType::ORDER));
     }
 
     private function orderCancel(string $orderId, Context $context): void
     {
-        $order = $this->orderRepository->search(
-            (new Criteria([$orderId]))->addAssociation('customer'),
-            $context
-        )->get($orderId);
+        $criteria = new Criteria([$orderId]);
+        $criteria->addAssociation('orderCustomer.customer.address');
+        $criteria->addAssociation('lineItems.product.media');
+        $criteria->addAssociation('billingAddress.country');
+        $criteria->addAssociation('currency');
+
+        $order = $this->orderRepository->search($criteria, $context)->get($orderId);
 
         if (!$order instanceof OrderEntity) {
             return;
         }
 
-        $this->sendPost($this->createOrderData($order, $context, ActionType::ORDER_CANCEL));
+        $this->sendData($this->createOrderData(order: $order, actionType: ActionType::ORDER_CANCEL));
     }
 
-    private function searchBreadcrumbs(array $navigationTree, SalesChannelProductEntity $product): void
+    private function searchBreadcrumbs(array $navigationTree, SalesChannelProductEntity $product): array
     {
         /** @var TreeItem $treeItem */
         foreach ($navigationTree as $treeItem) {
             $productTree = $product->getCategoryTree();
 
             if ($treeItem->getCategory()->getId() === end($productTree)) {
-                $this->breadcrumb = $treeItem->getCategory()->getPlainBreadcrumb();
+                $breadcrumb = $treeItem->getCategory()->getPlainBreadcrumb();
             } elseif (!empty($treeItem->getChildren())) {
                 $this->searchBreadcrumbs($treeItem->getChildren(), $product);
             }
         }
+
+        return $breadcrumb ?? [];
     }
 
-    private function setUrlForProduct(string $productId, Context $context, SalesChannelContext $salesChannelContext): string
+    private function setUrlForProduct(string $productId, SalesChannelContext $salesChannelContext): string
     {
         $seoPlaceholder = $this->seoUrlPlaceholderHandler->generate(
             name: 'frontend.detail.page',
@@ -157,27 +152,15 @@ class EdroneService
 
         return $this->seoUrlPlaceholderHandler->replace(
             content: $seoPlaceholder,
-            host: $this->getSalesChanelDomain($context)->getUrl(),
+            host: $salesChannelContext->getSalesChannel()->getDomains()->first()->getUrl(),
             context: $salesChannelContext
         );
     }
 
-    private function getSalesChanelDomain(Context $context): SalesChannelDomainEntity
-    {
-        $salesChanelId = $context->getSource()->getSalesChannelId();
-
-        $criteria = new Criteria();
-        $criteria->addAssociation('currency');
-        $criteria->addAssociation('language');
-        $criteria->addFilter(new EqualsFilter('salesChannelId', $salesChanelId));
-
-        return $this->salesChannelDomainRepository->search($criteria, $context)->first();
-    }
-
-    private function createOrderData(OrderEntity $order, Context $context, ActionType $actionType): array
+    private function createOrderData(OrderEntity $order, ActionType $actionType): array
     {
         /** @var SalesChannelContext $salesChannelContext */
-        $salesChannelContext = $this->getSalesChannelContextBySalesChannelId($context->getSource()->getSalesChannelId());
+        $salesChannelContext = $this->getSalesChannelContextBySalesChannelId($order->getSalesChannelId());
 
         /** @var OrderCustomerEntity $orderCustomer */
         $orderCustomer = $order->getOrderCustomer();
@@ -187,15 +170,20 @@ class EdroneService
 
         /** @var OrderLineItemEntity $lineItem */
         foreach ($lineItems as $lineItem) {
-            $product_titles[] = $lineItem->getLabel();
-            $product_skus[] = $lineItem->getProduct()->getProductNumber();
-            $product_ids[] = $lineItem->getId();
-            $product_images[] = $lineItem->getProduct()?->getMedia()?->first()?->getMedia()?->getUrl();
-            $product_urls[] = $this->setUrlForProduct($lineItem->getProductId(), $context, $salesChannelContext);;
-            $product_counts[] = $lineItem->getQuantity();
+            $productTitles[] = $lineItem->getLabel();
+            $productSkus[] = $lineItem->getProduct()->getProductNumber();
+            $productIds[] = $lineItem->getId();
+            $productImages[] = $lineItem->getProduct()?->getMedia()?->first()?->getMedia()?->getUrl();
+
+            $productUrls[] = $this->setUrlForProduct(
+                productId: $lineItem->getProductId(),
+                salesChannelContext: $salesChannelContext,
+            );
+
+            $productCounts[] = $lineItem->getQuantity();
 
             foreach ($lineItem->getPayload()['categoryIds'] as $category) {
-                $product_category_ids[] = $category;
+                $productCategoryIds[] = $category;
             }
         }
 
@@ -207,10 +195,10 @@ class EdroneService
             'sender_type' => 'server',
             'email' => $order->getOrderCustomer()->getEmail(),
             'order_id' => $order->getOrderNumber(),
-            'action_type' => ActionType::ORDER->value,
+            'action_type' => $actionType->value,
         ];
 
-        $orderPurchaseCredentials = [
+        $additionalCredentials = [
             'first_name' => $orderCustomer->getFirstName(),
             'last_name' => $orderCustomer->getLastName(),
             'phone' => $order->getBillingAddress()->getPhoneNumber(),
@@ -221,18 +209,18 @@ class EdroneService
             'base_payment_value' => $order->getAmountTotal(),
             'base_currency' => $order->getCurrency()->getShortName(),
             'order_currency' => $order->getCurrency()->getShortName(),
-            'product_ids' => join('|', $product_ids),
-            'product_skus' => join('|', $product_skus),
-            'product_titles' => join('|', $product_titles),
-            'product_images' => join('|', $product_images),
-            'product_urls' => join('|', $product_urls),
-            'product_counts' => join('|', $product_counts),
-            'product_category_ids' => join('|', $product_category_ids),
+            'product_ids' => join('|', $productIds),
+            'product_skus' => join('|', $productSkus),
+            'product_titles' => join('|', $productTitles),
+            'product_images' => join('|', $productImages),
+            'product_urls' => join('|', $productUrls),
+            'product_counts' => join('|', $productCounts),
+            'product_category_ids' => join('|', $productCategoryIds),
         ];
 
         return match ($actionType) {
-            ActionType::ORDER => array_merge($basicCredentials, $orderPurchaseCredentials),
             ActionType::ORDER_CANCEL => $basicCredentials,
+            ActionType::ORDER => array_merge($basicCredentials, $additionalCredentials),
             default => null,
         };
     }
@@ -251,37 +239,19 @@ class EdroneService
         ];
     }
 
-    private function sendProduct(array $params): void
+    private function sendData(array $params): void
     {
         if ($this->configService->getAppId() === null) {
             return;
         }
+        $client = new Client();
+//dd($params);
+        $client->post(self::EDRONE_URL, [
+            'body' => http_build_query($params),
+            'headers' => [
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ]
+        ]);
 
-        $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL, self::EDRONE_URL);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HEADER, false);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/x-www-form-urlencoded'));
-        curl_exec($ch);
-        curl_close($ch);
-    }
-
-    private function sendPost(array $params): void
-    {
-        if ($this->configService->getAppId() === null) {
-            return;
-        }
-
-        $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL, self::EDRONE_URL);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HEADER, false);
-        curl_setopt($ch, CURLOPT_POST, count($params));
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-        curl_exec($ch);
-        curl_close($ch);
     }
 }

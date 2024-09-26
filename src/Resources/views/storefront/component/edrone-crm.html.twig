@@ -3,7 +3,6 @@
 
     {% if config.appId is not empty %}
         <script type="text/javascript">
-
             window.edroneCrmCallback = (function () {
                 let srcjs = "//d3bo67muzbfgtl.cloudfront.net/edrone_2_0.js";
 
@@ -33,8 +32,8 @@
                     _edrone.product_availability = '{% if page.product.available %}1{% else %}0{% endif %}';
 
                     {% if page.product.extensions.edroneProductCategory is not empty %}
-                        _edrone.product_category_ids = '{{ page.product.extensions.edroneProductCategory.productCategoryIds |url_encode }}';
-                        _edrone.product_category_names = '{{ page.product.extensions.edroneProductCategory.productCategoryNames |url_encode }}';
+                    _edrone.product_category_ids = '{{ page.product.extensions.edroneProductCategory.productCategoryIds |url_encode }}';
+                    _edrone.product_category_names = '{{ page.product.extensions.edroneProductCategory.productCategoryNames |url_encode }}';
                     {% endif %}
                 }
 

@@ -12,7 +12,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class OrderSubscriber implements EventSubscriberInterface
 {
-    public function __construct(private readonly EdroneService $edroneService)
+    public function __construct(private readonly EdroneService $edroneService,)
     {
     }
 
