@@ -112,13 +112,10 @@ class EdroneService
 
     private function orderCancel(string $orderId, Context $context): void
     {
-        $criteria = new Criteria([$orderId]);
-        $criteria->addAssociation('orderCustomer.customer.address');
-        $criteria->addAssociation('lineItems.product.media');
-        $criteria->addAssociation('billingAddress.country');
-        $criteria->addAssociation('currency');
-
-        $order = $this->orderRepository->search($criteria, $context)->get($orderId);
+        $order = $this->orderRepository->search(
+            (new Criteria([$orderId]))->addAssociation('customer'),
+            $context
+        )->get($orderId);
 
         if (!$order instanceof OrderEntity) {
             return;
@@ -245,7 +242,7 @@ class EdroneService
             return;
         }
         $client = new Client();
-//dd($params);
+
         $client->post(self::EDRONE_URL, [
             'body' => http_build_query($params),
             'headers' => [
