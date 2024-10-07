@@ -2,7 +2,7 @@
     "name": "crehler/edrone-crm",
     "description": "Crehler Edrone Crm",
     "type": "shopware-platform-plugin",
-    "license": "proprietary",
+    "license": "CC BY-ND 4.0",
     "version": "2.0.4",
     "authors": [
         {
