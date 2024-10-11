@@ -8,4 +8,8 @@
 - Zmiana statusu wysyłania zamówienia na edrone
 # 2.0.5
 - Akutalizacja dokumentacji
+# 3.0.0
+- Kompatybilność z Shopware 6.6
+# 3.0.4
+- Zmiana statusu wysyłania zamówienia w edrone
 

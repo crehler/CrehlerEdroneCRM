@@ -8,3 +8,7 @@
 - Ändern des Status des Sendeauftrags in edrone
 # 2.0.5
 - Dokumentation aktualisieren
+# 3.0.0
+- Shopware 6.6 Kompatibilität
+# 3.0.4
+- Ändern Sie den Sendestatus der Bestellung in edrone
