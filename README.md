@@ -1,8 +1,8 @@
 # CrehlerEdroneCRM
 
 ## Specification
-- shopware 6.5.*
-- php 8.1 or higher
+- shopware 6.6.*
+- php 8.2 or higher
 
 ## Installation
 
