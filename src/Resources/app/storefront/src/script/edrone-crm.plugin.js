@@ -78,5 +78,6 @@ export default class EdroneCrmPlugin extends Plugin {
         window._edrone.product_availability = '1';
         // _edrone.product_category_ids = '{{ page.product.extensions.edroneProductCategory.productCategoryIds |url_encode }}';
         window._edrone.product_category_names =  document.querySelector(this.options.listingBreadcrumbSelector).innerText.replace('\n','~');
+        window._edrone.shop_lang = document.querySelector('html').lang;
     }
 }

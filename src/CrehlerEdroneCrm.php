@@ -8,7 +8,7 @@ use Shopware\Core\Framework\Plugin;
 
 class CrehlerEdroneCrm extends Plugin
 {
-    public const VERSION = '2.0.1';
+    public const VERSION = '2.0.4';
 
     public const PLATFORM = 'shopware6';
 
