@@ -4,3 +4,7 @@
 - Shopware 6.4 compatibility
 # 2.0.0
 - Shopware 6.5 compatibility
+# 2.0.4
+- Change sending order status to edrone
+# 2.0.5
+- Dokumentation aktualisieren

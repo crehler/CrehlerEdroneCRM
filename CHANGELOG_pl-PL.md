@@ -4,3 +4,8 @@
 - Kompatybilność z Shopware 6.4
 # 2.0.0
 - Kompatybilność z Shopware 6.5
+# 2.0.4
+- Zmiana statusu wysyłania zamówienia na edrone
+# 2.0.5
+- Akutalizacja dokumentacji
+
