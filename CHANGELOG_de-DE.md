@@ -12,3 +12,5 @@
 - Shopware 6.6 Kompatibilität
 # 3.0.4
 - Ändern Sie den Sendestatus der Bestellung in edrone
+# 3.0.5
+- Reparieren des Sendens von Produktseiteninformationen an edrone

@@ -12,3 +12,5 @@
 - Shopware 6.6 compatibility
 # 3.0.4
 - Change the shipment status of the order in edrone
+# 3.0.5
+- Fix sending product page info to edrone

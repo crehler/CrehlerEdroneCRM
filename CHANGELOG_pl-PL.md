@@ -12,4 +12,5 @@
 - Kompatybilność z Shopware 6.6
 # 3.0.4
 - Zmiana statusu wysyłania zamówienia w edrone
-
+# 3.0.5
+- Poprawka dotycząca wysyłania informacji z strony produktów do Edrone
