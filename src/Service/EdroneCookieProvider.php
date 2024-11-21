@@ -16,7 +16,7 @@ class EdroneCookieProvider implements CookieProviderInterface
         'cookie' => 'edrone-crm-enabled',
         'expiration' => '30',
         'value' => '1',
-        'default' => true
+        'default' => false
     ];
 
     public function __construct(private readonly CookieProviderInterface $originalService)
