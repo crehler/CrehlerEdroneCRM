@@ -6,6 +6,7 @@ namespace Crehler\EdroneCrm\Service;
 
 use Shopware\Storefront\Framework\Cookie\CookieProviderInterface;
 
+use Symfony\Component\HttpFoundation\RequestStack;
 use function array_merge;
 
 class EdroneCookieProvider implements CookieProviderInterface
@@ -19,9 +20,10 @@ class EdroneCookieProvider implements CookieProviderInterface
         'default' => false
     ];
 
-    public function __construct(private readonly CookieProviderInterface $originalService)
-    {
-    }
+    public function __construct(
+        private readonly CookieProviderInterface $originalService,
+        private readonly RequestStack            $requestStack
+    ) {}
 
     public function getCookieGroups(): array
     {
@@ -40,10 +42,11 @@ class EdroneCookieProvider implements CookieProviderInterface
      */
     public function isCookieConsentAccepted(): bool
     {
-        foreach ($this->getCookieGroups() as $cookie) {
-            if ($cookie['snippet_name'] === self::EDRONE_COOKIE['snippet_name']) {
-                return true;
-            }
+        $acceptedCookiesArray = $this->requestStack->getMainRequest()->cookies->all();
+
+        if (array_key_exists(self::EDRONE_COOKIE['cookie'], $acceptedCookiesArray)
+            && $acceptedCookiesArray[self::EDRONE_COOKIE['cookie']] === '1') {
+            return true;
         }
 
         return false;

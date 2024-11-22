@@ -35,6 +35,7 @@
         <!-- Decorates -->
         <service id="Crehler\EdroneCrm\Service\EdroneCookieProvider" decorates="Shopware\Storefront\Framework\Cookie\CookieProviderInterface">
             <argument type="service" id="Crehler\EdroneCrm\Service\EdroneCookieProvider.inner"/>
+            <argument type="service" id="Symfony\Component\HttpFoundation\RequestStack"/>
         </service>
 
         <!-- Snippets-->
