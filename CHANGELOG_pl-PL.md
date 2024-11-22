@@ -8,4 +8,6 @@
 - Zmiana statusu wysyłania zamówienia na edrone
 # 2.0.5
 - Akutalizacja dokumentacji
+# 2.0.6
+- Aktualizacja polityki ciasteczek
 

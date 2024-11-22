@@ -8,3 +8,5 @@
 - Ändern des Status des Sendeauftrags in edrone
 # 2.0.5
 - Dokumentation aktualisieren
+# 2.0.6
+- Cookie-Richtlinie aktualisieren

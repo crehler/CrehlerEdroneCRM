@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Crehler\EdroneCrm\Subscriber;
 
+use Crehler\EdroneCrm\Service\EdroneCookieProvider;
 use Crehler\EdroneCrm\Service\EdroneService;
 use Shopware\Core\Checkout\Order\OrderDefinition;
 use Shopware\Core\Checkout\Order\OrderEvents;
@@ -12,7 +13,11 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class OrderSubscriber implements EventSubscriberInterface
 {
-    public function __construct(private readonly EdroneService $edroneService,)
+    const string EDRONE_COOKIE_NAME = 'crehlerEdroneCrm.cookie.edroneName';
+    public function __construct(
+        private readonly EdroneService $edroneService,
+        private readonly EdroneCookieProvider $edroneCookieProvider
+    )
     {
     }
 
@@ -25,6 +30,10 @@ class OrderSubscriber implements EventSubscriberInterface
 
     public function onOrderWritten(EntityWrittenEvent $event): void
     {
+        if (! $this->edroneCookieConsentProvider()) {
+            return;
+        }
+
         if (OrderDefinition::ENTITY_NAME !== $event->getEntityName()) {
             return;
         }
@@ -38,5 +47,21 @@ class OrderSubscriber implements EventSubscriberInterface
 
             $this->edroneService->orderChanged($payload['id'], $payload['stateId'], $event->getContext());
         }
+    }
+
+    /**
+     * Check if user accept Edrone cookies consent
+     *
+     * @return bool
+     */
+    private function isCookieConsentAccepted(): bool
+    {
+        foreach ($this->edroneCookieProvider->getCookieGroups() as $cookie) {
+            if ($cookie['snippet_name'] === self::EDRONE_COOKIE_NAME) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -28,6 +28,7 @@
 
         <service id="Crehler\EdroneCrm\Subscriber\OrderSubscriber">
             <argument type="service" id="Crehler\EdroneCrm\Service\EdroneService"/>
+            <argument type="service" id="Crehler\EdroneCrm\Service\EdroneCookieProvider"/>
             <tag name="kernel.event_subscriber"/>
         </service>
 

@@ -7,4 +7,6 @@
 # 2.0.4
 - Change sending order status to edrone
 # 2.0.5
-- Dokumentation aktualisieren
+- Update documentation
+# 2.0.6
+- Update cookie policy
