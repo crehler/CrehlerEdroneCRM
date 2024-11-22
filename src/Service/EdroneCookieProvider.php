@@ -32,4 +32,20 @@ class EdroneCookieProvider implements CookieProviderInterface
             ]
         );
     }
+
+    /**
+     * Check if user accept Edrone cookies consent
+     *
+     * @return bool
+     */
+    public function isCookieConsentAccepted(): bool
+    {
+        foreach ($this->edroneCookieProvider->getCookieGroups() as $cookie) {
+            if ($cookie['snippet_name'] === self::EDRONE_COOKIE['snippet_name']) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

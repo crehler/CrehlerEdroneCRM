@@ -7,10 +7,14 @@
 # 2.0.4
 - Change sending order status to edrone
 # 2.0.5
-- Dokumentation aktualisieren
+- Update documentation
+# 2.0.6
+- Update cookie policy
 # 3.0.0
 - Shopware 6.6 compatibility
 # 3.0.4
 - Change the shipment status of the order in edrone
 # 3.0.5
 - Fix sending product page info to edrone
+# 3.0.6
+- Cookie-Richtlinie aktualisieren
