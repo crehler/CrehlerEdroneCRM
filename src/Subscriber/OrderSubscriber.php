@@ -29,7 +29,7 @@ class OrderSubscriber implements EventSubscriberInterface
 
     public function onOrderWritten(EntityWrittenEvent $event): void
     {
-        if (! $this->edroneCookieConsentProvider()) {
+        if (! $this->edroneCookieProvider->isCookieConsentAccepted()) {
             return;
         }
 
