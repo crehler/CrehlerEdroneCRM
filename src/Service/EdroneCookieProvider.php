@@ -40,7 +40,7 @@ class EdroneCookieProvider implements CookieProviderInterface
      */
     public function isCookieConsentAccepted(): bool
     {
-        foreach ($this->edroneCookieProvider->getCookieGroups() as $cookie) {
+        foreach ($this->getCookieGroups() as $cookie) {
             if ($cookie['snippet_name'] === self::EDRONE_COOKIE['snippet_name']) {
                 return true;
             }
